@@ -5,11 +5,15 @@ import (
 	"log"
 	"os"
 
+	"github.com/joho/godotenv"
+
 	"github.com/King12-D/davenated/internal/config"
 	"github.com/King12-D/davenated/internal/mailer"
 )
 
 func main() {
+	_ = godotenv.Load()
+
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
 		log.Fatal(err)

@@ -19,7 +19,7 @@ Required:
 
 Optional:
 
-- `FLINK_EMAIL_FROM` (default: `Flink`)
+- `FLINK_EMAIL_FROM` (default: `Flink <onboarding@resend.dev>`, must be `email@example.com` or `Name <email@example.com>`; quote it in `.env` if it contains spaces)
 - `FLINK_EMAIL_SUBJECT` (default: `Flink waiting list update`)
 - `FLINK_EMAIL_HTML` (default: built-in HTML message)
 

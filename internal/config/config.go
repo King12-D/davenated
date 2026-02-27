@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/mail"
 	"os"
 	"strings"
 
@@ -21,7 +22,10 @@ func LoadFromEnv() (Config, error) {
 
 	from := strings.TrimSpace(os.Getenv("FLINK_EMAIL_FROM"))
 	if from == "" {
-		from = "Flink"
+		from = "Flink <onboarding@resend.dev>"
+	}
+	if _, err := mail.ParseAddress(from); err != nil {
+		return Config{}, fmt.Errorf("invalid FLINK_EMAIL_FROM %q: use email@example.com or Name <email@example.com>", from)
 	}
 
 	toRaw := strings.TrimSpace(os.Getenv("FLINK_EMAIL_TO"))
@@ -29,10 +33,18 @@ func LoadFromEnv() (Config, error) {
 		return Config{}, fmt.Errorf("missing FLINK_EMAIL_TO")
 	}
 	to := splitCSV(toRaw)
+	if len(to) == 0 {
+		return Config{}, fmt.Errorf("FLINK_EMAIL_TO has no valid email addresses")
+	}
+	for _, recipient := range to {
+		if _, err := mail.ParseAddress(recipient); err != nil {
+			return Config{}, fmt.Errorf("invalid recipient %q in FLINK_EMAIL_TO", recipient)
+		}
+	}
 
 	subject := strings.TrimSpace(os.Getenv("FLINK_EMAIL_SUBJECT"))
 	if subject == "" {
-		subject = "Flink waiting list update"
+		subject = "Flink Waitlist Update: We Are Still Building"
 	}
 
 	html := strings.TrimSpace(os.Getenv("FLINK_EMAIL_HTML"))
@@ -66,17 +78,20 @@ func splitCSV(value string) []string {
 
 func defaultHTML() string {
 	return strings.Join([]string{
-		"<p>Hey Dear</p>",
-		"<p>Hello,</p>",
-		"<p>In January, you joined the Pantero waitlist.</p>",
-		"<p>Since then, we have been building deliberately and strategically. Rather than rushing to launch with incomplete features, we chose to focus on designing the system correctly from the ground up.</p>",
-		"<p>Pantero is not being built as another content platform. It is being structured as a framework for real skill development and measurable progress.</p>",
-		"<p>Over the past few months, our focus has been on three core areas:</p>",
-		"<ol>",
-		"<li>Structured Learning Paths: Creating guided pathways that move users from foundational knowledge to practical competence, not passive consumption.</li>",
-		"<li>Learning to Doing to Earning: Designing a progression system that connects skill acquisition with execution and real opportunities.</li>",
-		"<li>Simplicity and Clarity: Ensuring the platform remains focused, outcome-driven, and free from unnecessary complexity.</li>",
-		"</ol>",
-		"<p>Our goal is simple: when early access begins, users should experience immediate value, not promises of coming soon features.</p>",
+		"<h2>Flink Waitlist Update</h2>",
+		"<p>Hi there,</p>",
+		"<p>Thank you for joining the Flink waitlist at <a href=\"https://getflink.pro\">getflink.pro</a>.</p>",
+		"<p>We are still building Flink carefully so we can launch something useful and reliable for smallholder farmers across Africa.</p>",
+		"<p>Flink is being built to help farmers decide what to plant, when to plant, and where to sell, using practical information and direct market access.</p>",
+		"<p><strong>Current focus areas:</strong></p>",
+		"<ul>",
+		"<li><strong>Actionable insights:</strong> crop recommendations, seasonal guidance, and local farming tips.</li>",
+		"<li><strong>Market visibility and access:</strong> clearer pricing signals and direct buyer connections.</li>",
+		"<li><strong>Low-connectivity reliability:</strong> a lightweight mobile-first experience that works on affordable phones and slower networks.</li>",
+		"</ul>",
+		"<p>Our goal is clear: help farmers improve productivity, reduce waste, and earn more from every harvest.</p>",
+		"<p>We will share another update soon, including early access details.</p>",
+		"<p><a href=\"https://getflink.pro\" style=\"display:inline-block;padding:10px 16px;background:#fff;color:#111;text-decoration:none;border-radius:6px;\">Visit getflink.pro</a></p>",
+		"<p>Thanks for your patience and support.<br/>The Flink Team</p>",
 	}, "\n")
 }

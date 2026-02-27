@@ -1,0 +1,13 @@
+.env
+.env.local
+
+# Go build/test outputs
+bin/
+dist/
+*.test
+*.out
+coverage.out
+
+# Go workspace files
+go.work
+go.work.sum

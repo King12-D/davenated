@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 
@@ -12,7 +13,7 @@ import (
 )
 
 func main() {
-	_ = godotenv.Load()
+	_ = loadDotEnv()
 
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
@@ -25,4 +26,24 @@ func main() {
 	}
 
 	fmt.Fprintln(os.Stdout, "email sent")
+}
+
+func loadDotEnv() error {
+	dir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	for {
+		candidate := filepath.Join(dir, ".env")
+		if _, statErr := os.Stat(candidate); statErr == nil {
+			return godotenv.Load(candidate)
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return nil
+		}
+		dir = parent
+	}
 }

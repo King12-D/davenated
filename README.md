@@ -1,37 +1,59 @@
 # Flink Mailer
 
-Small Go CLI for sending a Flink waitlist update email using Resend.
+Branded waitlist email sender for Flink, built in Go with Resend.
+
+It loads `.env`, sends one email per recipient for privacy, and includes rate-limit handling for reliable bulk sends.
+
+## Why this setup
+
+- No recipient address leakage between users.
+- Built-in branded Flink HTML template with logo support.
+- Retry and pacing logic for Resend `2 requests/second` limits.
 
 ## Requirements
 
-- Go 1.25+
-- A Resend API key
+- Go `1.25+`
+- Resend API key
+- Verified sender address on Resend (or allowed sender domain)
 
-## Setup
+## Quick Start
 
-1. Copy `.env.example` to `.env` and fill in the values.
-2. The app auto-loads `.env` at startup, so you can run directly.
-
-Required:
-
-- `RESEND_API_KEY`
-- `FLINK_EMAIL_TO` (comma-separated list). Example: `person1@example.com,person2@example.com`
-
-Optional:
-
-- `FLINK_EMAIL_FROM` (default: `Flink <onboarding@resend.dev>`, must be `email@example.com` or `Name <email@example.com>`; quote it in `.env` if it contains spaces)
-- `FLINK_EMAIL_SUBJECT` (default: `Flink Waitlist Update: We Are Still Building`)
-- `FLINK_EMAIL_LOGO_URL` (default: `https://getflink.pro/logo.png`)
-- `FLINK_EMAIL_HTML` (default: built-in HTML message)
-
-## Run
-
+1. Create your env file:
+```bash
+cp .env.example .env
+```
+2. Update `.env` values.
+3. Run:
 ```bash
 go run ./cmd/flink
 ```
 
-## Project Layout
+## Environment Variables
 
-- `cmd/flink/main.go` entrypoint
-- `internal/config` env parsing and defaults
-- `internal/mailer` email sending via Resend
+| Variable | Required | Description |
+|---|---|---|
+| `RESEND_API_KEY` | Yes | Resend API key. |
+| `FLINK_EMAIL_TO` | Yes | Comma-separated recipients, e.g. `a@mail.com,b@mail.com`. |
+| `FLINK_EMAIL_FROM` | No | Sender format: `email@example.com` or `Name <email@example.com>`. Quote if it contains spaces. Default: `Flink <onboarding@resend.dev>`. |
+| `FLINK_EMAIL_SUBJECT` | No | Subject line. Default: `Flink Waitlist Update: We Are Still Building`. |
+| `FLINK_EMAIL_LOGO_URL` | No | Public HTTPS logo URL used in the default template. Default: `https://getflink.pro/logo.png`. |
+| `FLINK_EMAIL_HTML` | No | Full custom HTML. Leave unset to use the built-in Flink template. |
+
+## Sending Behavior
+
+- Loads `.env` automatically from current directory or parent directories.
+- Sends to each recipient individually.
+- Adds pacing between sends.
+- Retries on rate-limit errors with short backoff.
+
+## Project Structure
+
+- `cmd/flink/main.go` app entrypoint
+- `internal/config/config.go` env loading, defaults, and validation
+- `internal/mailer/resend.go` Resend client + per-recipient sending
+
+## Common Issues
+
+- `invalid FLINK_EMAIL_FROM "Flink"`: Use a real email format, e.g. `"Flink <info@yourdomain.com>"`.
+- `rate limit exceeded`: Keep current logic in place; it already throttles and retries.
+- Logo not showing: Ensure `FLINK_EMAIL_LOGO_URL` is a public direct image URL (HTTPS).
